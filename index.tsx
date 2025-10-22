@@ -11,7 +11,25 @@ import { ToastMessage } from './components/ToastMessage';
 import { LiveMusicHelper } from './utils/LiveMusicHelper';
 import { AudioAnalyser } from './utils/AudioAnalyser';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: 'v1alpha' });
+const apiKey = process.env.GEMINI_API_KEY;
+
+// Check if API key is configured
+if (!apiKey || apiKey === 'your_api_key_here') {
+  document.body.innerHTML = `
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; padding: 20px; text-align: center;">
+      <h1 style="color: #ff0000; margin-bottom: 20px;">⚠️ API Key Required</h1>
+      <p style="color: #fff; max-width: 600px; line-height: 1.6;">
+        Please set your Gemini API key in the <code>.env.local</code> file.<br><br>
+        Get your API key from: <a href="https://aistudio.google.com/apikey" target="_blank" style="color: #4a9eff;">https://aistudio.google.com/apikey</a><br><br>
+        Then add it to <code>.env.local</code> as:<br>
+        <code style="background: #333; padding: 10px; display: inline-block; margin-top: 10px;">GEMINI_API_KEY=your_actual_api_key</code>
+      </p>
+    </div>
+  `;
+  throw new Error('GEMINI_API_KEY is not configured');
+}
+
+const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1alpha' });
 const model = 'lyria-realtime-exp';
 
 function main() {
@@ -49,14 +67,14 @@ function main() {
   liveMusicHelper.addEventListener('filtered-prompt', ((e: Event) => {
     const customEvent = e as CustomEvent<LiveMusicFilteredPrompt>;
     const filteredPrompt = customEvent.detail;
-    toastMessage.show(filteredPrompt.filteredReason!)
+    toastMessage.show(filteredPrompt.filteredReason!, 'error', 7000)
     pdjMidi.addFilteredPrompt(filteredPrompt.text!);
   }));
 
   const errorToast = ((e: Event) => {
     const customEvent = e as CustomEvent<string>;
     const error = customEvent.detail;
-    toastMessage.show(error);
+    toastMessage.show(error, 'error', 8000);
   });
 
   liveMusicHelper.addEventListener('error', errorToast);

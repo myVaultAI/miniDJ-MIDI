@@ -15,7 +15,7 @@ export class LiveMusicHelper extends EventTarget {
   private session: LiveMusicSession | null = null;
   private sessionPromise: Promise<LiveMusicSession> | null = null;
 
-  private connectionError = true;
+  private connectionError = false;
 
   private filteredPrompts = new Set<string>();
   private nextStartTime = 0;

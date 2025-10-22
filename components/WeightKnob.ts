@@ -25,12 +25,22 @@ export class WeightKnob extends LitElement {
       flex-shrink: 0;
       touch-action: none;
     }
+    :host(:active) {
+      cursor: grabbing;
+    }
     svg {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      transition: transform 0.15s ease-out;
+    }
+    :host(:hover) svg {
+      transform: scale(1.05);
+    }
+    :host(:active) svg {
+      transform: scale(0.98);
     }
     #halo {
       position: absolute;
@@ -43,6 +53,24 @@ export class WeightKnob extends LitElement {
       mix-blend-mode: lighten;
       transform: scale(2);
       will-change: transform;
+      transition: transform 0.2s ease-out;
+    }
+    #value-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 0.9em;
+      font-weight: 600;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    }
+    :host(:hover) #value-display,
+    :host(:active) #value-display {
+      opacity: 1;
     }
   `;
 
@@ -71,7 +99,9 @@ export class WeightKnob extends LitElement {
 
   private handlePointerMove(e: PointerEvent) {
     const delta = this.dragStartPos - e.clientY;
-    this.value = this.dragStartValue + delta * 0.01;
+    // Improved sensitivity: slower for fine control
+    const sensitivity = e.shiftKey ? 0.005 : 0.008;
+    this.value = this.dragStartValue + delta * sensitivity;
     this.value = Math.max(0, Math.min(2, this.value));
     this.dispatchEvent(new CustomEvent<number>('input', { detail: this.value }));
   }
@@ -83,8 +113,11 @@ export class WeightKnob extends LitElement {
   }
 
   private handleWheel(e: WheelEvent) {
+    e.preventDefault();
     const delta = e.deltaY;
-    this.value = this.value + delta * -0.0025;
+    // Better wheel sensitivity with Shift modifier for fine control
+    const sensitivity = e.shiftKey ? 0.001 : 0.003;
+    this.value = this.value + delta * -sensitivity;
     this.value = Math.max(0, Math.min(2, this.value));
     this.dispatchEvent(new CustomEvent<number>('input', { detail: this.value }));
   }
@@ -128,8 +161,11 @@ export class WeightKnob extends LitElement {
       transform: `scale(${scale})`,
     });
 
+    const displayValue = this.value.toFixed(2);
+
     return html`
       <div id="halo" style=${haloStyle}></div>
+      <div id="value-display">${displayValue}</div>
       <!-- Static SVG elements -->
       ${this.renderStaticSvg()}
       <!-- SVG elements that move, separated to limit redraws -->
